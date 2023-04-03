@@ -52,7 +52,8 @@ func main() {
 
 			weatherByCountry := "Temp: " + fmt.Sprintf("%.2f\n", w.Main.Temp) + "Temp max: " +
 				fmt.Sprintf("%.2f\n", w.Main.TempMax) + "Temp min: " + fmt.Sprintf("%.2f\n", w.Main.TempMin) +
-				"Feels like: " + fmt.Sprintf("%.2f\n", w.Main.FeelsLike)
+				"Feels like: " + fmt.Sprintf("%.2f\n", w.Main.FeelsLike) + "Geo location: " +
+				fmt.Sprintf("%.2f, %.2f\n", w.GeoPos.Latitude, w.GeoPos.Longitude)
 
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, weatherByCountry)
 			msg.ReplyToMessageID = update.Message.MessageID
