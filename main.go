@@ -26,12 +26,12 @@ func main() {
 		fmt.Println(telegramBot)
 	}
 
-	w, err := owm.NewCurrent("C", "ru", "owm_API_KEY") // fahrenheit (imperial) with Russian output
+	w, err := owm.NewCurrent("C", "ru", openWeatherMap) // fahrenheit (imperial) with Russian output
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	bot, err := tgbotapi.NewBotAPI("tg_API_KEY")
+	bot, err := tgbotapi.NewBotAPI(telegramBot)
 	if err != nil {
 		log.Panic(err)
 	}
