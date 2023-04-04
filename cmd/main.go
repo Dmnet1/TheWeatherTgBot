@@ -1,32 +1,27 @@
 package main
 
 import (
+	"The-weather-TGbot/internal"
 	"fmt"
 	owm "github.com/briandowns/openweathermap"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 	"log"
-	"os"
 )
 
-func main() {
+func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
 	}
+}
 
-	openWeatherMap, exists := os.LookupEnv("owm_API_KEY")
+func main() {
 
-	if exists {
-		fmt.Println(openWeatherMap)
-	}
+	openWeatherMap := internal.GiveAPIKeyForTGBot()
 
-	telegramBot, exists := os.LookupEnv("tg_API_KEY")
+	telegramBot := internal.GiveAPIKeyForTGBot()
 
-	if exists {
-		fmt.Println(telegramBot)
-	}
-
-	w, err := owm.NewCurrent("C", "ru", openWeatherMap) // fahrenheit (imperial) with Russian output
+	w, err := owm.NewCurrent("C", "ru", openWeatherMap)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -44,11 +39,22 @@ func main() {
 	u.Timeout = 60
 
 	updates := bot.GetUpdatesChan(u)
+	var lon, lat = 0.0, 0.0
 
 	for update := range updates {
 		if update.Message != nil { // If we got a dataWeather
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-			w.CurrentByName(update.Message.Text)
+
+			if update.Message.Text == "" {
+				lon = update.Message.Location.Longitude
+				lat = update.Message.Location.Latitude
+				w.CurrentByCoordinates(&owm.Coordinates{
+					Longitude: lon,
+					Latitude:  lat,
+				})
+			} else {
+				w.CurrentByName(update.Message.Text)
+			}
 
 			weatherByCountry := "Temp: " + fmt.Sprintf("%.2f\n", w.Main.Temp) + "Temp max: " +
 				fmt.Sprintf("%.2f\n", w.Main.TempMax) + "Temp min: " + fmt.Sprintf("%.2f\n", w.Main.TempMin) +
