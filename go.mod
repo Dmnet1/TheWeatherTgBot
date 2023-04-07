@@ -1,4 +1,4 @@
-module The-weather-TGbot/cmd
+module The-weather-TGbot
 
 go 1.20
 

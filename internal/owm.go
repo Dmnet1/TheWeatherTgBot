@@ -1,15 +1,56 @@
 package internal
 
 import (
+	owm "github.com/briandowns/openweathermap"
 	"log"
 	"os"
 )
 
-func GiveAPIKeyForOWM() string {
-	openWeatherMap, exists := os.LookupEnv("owm_API_KEY")
+type OWMAPI struct {
+	API
+}
+
+func NewOWMAPI() *OWMAPI {
+	owmAPI, exists := os.LookupEnv("owm_API_KEY")
 
 	if !exists {
 		log.Panic("Can't find OWM key in .env", exists)
 	}
-	return openWeatherMap
+	return &OWMAPI{API{key: owmAPI}}
+}
+
+type OWMData struct {
+	CurrentWeatherData
+}
+
+func NewOWMData(key string) *OWMData {
+	w, err := owm.NewCurrent("C", "ru", key)
+	if err != nil {
+		log.Fatalln("OWM can't get data: ", err)
+	}
+
+	if weatherData.GeoPos.Location == "" {
+		w.CurrentByCoordinates(&owm.Coordinates{
+			Longitude: weatherData.GeoPos.Longitude,
+			Latitude:  weatherData.GeoPos.Latitude,
+		})
+	} else {
+		w.CurrentByName(weatherData.GeoPos.Location)
+	}
+
+	return &OWMData{CurrentWeatherData{
+		GeoPos: Coordinates{
+			Longitude: w.GeoPos.Longitude,
+			Latitude:  w.GeoPos.Latitude,
+		},
+		Main: Main{
+			Temp:      w.Main.Temp,
+			TempMin:   w.Main.TempMin,
+			TempMax:   w.Main.TempMax,
+			FeelsLike: w.Main.FeelsLike,
+			Pressure:  w.Main.Pressure,
+			Humidity:  w.Main.Humidity,
+		},
+	},
+	}
 }

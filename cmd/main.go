@@ -2,9 +2,6 @@ package main
 
 import (
 	"The-weather-TGbot/internal"
-	"fmt"
-	owm "github.com/briandowns/openweathermap"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 	"log"
 )
@@ -16,8 +13,8 @@ func init() {
 }
 
 func main() {
-
-	openWeatherMap := internal.GiveAPIKeyForTGBot()
+	internal.Run()
+	/*openWeatherMap := internal.GiveAPIKeyForOWM()
 
 	telegramBot := internal.GiveAPIKeyForTGBot()
 
@@ -28,7 +25,7 @@ func main() {
 
 	bot, err := tgbotapi.NewBotAPI(telegramBot)
 	if err != nil {
-		log.Panic(err)
+		log.Panic("couldn't create a new BotAPI instance: ", err)
 	}
 
 	bot.Debug = true
@@ -54,16 +51,16 @@ func main() {
 				})
 			} else {
 				w.CurrentByName(update.Message.Text)
-			}
+			}*/
 
-			weatherByCountry := "Temp: " + fmt.Sprintf("%.2f\n", w.Main.Temp) + "Temp max: " +
+	/*			weatherByCountry := "Temp: " + fmt.Sprintf("%.2f\n", w.Main.Temp) + "Temp max: " +
 				fmt.Sprintf("%.2f\n", w.Main.TempMax) + "Temp min: " + fmt.Sprintf("%.2f\n", w.Main.TempMin) +
 				"Feels like: " + fmt.Sprintf("%.2f\n", w.Main.FeelsLike) + "Geo location: " +
-				fmt.Sprintf("%.2f, %.2f\n", w.GeoPos.Latitude, w.GeoPos.Longitude)
+				fmt.Sprintf("%.2f, %.2f\n", w.GeoPos.Latitude, w.GeoPos.Longitude)*/
 
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, weatherByCountry)
+	/*	msg := tgbotapi.NewMessage(update.Message.Chat.ID, weatherByCountry)
 			msg.ReplyToMessageID = update.Message.MessageID
 			bot.Send(msg)
 		}
-	}
+	}*/
 }
