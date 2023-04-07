@@ -1,6 +1,7 @@
-package internal
+package tgbot
 
 import (
+	"The-weather-TGbot/internal/app"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"os"
@@ -12,11 +13,11 @@ type tgbot struct {
 	MessageID int
 }
 
-var tgBot tgbot
+var TgBot tgbot
 
-func (b *tgbot) getUpdates() *CurrentWeatherData {
+func (b *tgbot) getUpdates() *app.CurrentWeatherData {
 	var err error
-	b.bot, err = tgbotapi.NewBotAPI(key)
+	b.bot, err = tgbotapi.NewBotAPI(app.Key)
 	if err != nil {
 		log.Panic("couldn't create a new BotAPI instance: ", err)
 	}
@@ -30,27 +31,27 @@ func (b *tgbot) getUpdates() *CurrentWeatherData {
 
 	updates := b.bot.GetUpdatesChan(u)
 
-	weatherData = &CurrentWeatherData{GeoPos: Coordinates{Longitude: 0, Latitude: 0, Location: ""}}
+	app.WeatherData = &app.CurrentWeatherData{GeoPos: app.Coordinates{Longitude: 0, Latitude: 0, Location: ""}}
 
 	for update := range updates {
 		if update.Message != nil { // If we got a weather
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
 			if update.Message.Text == "" {
-				weatherData.GeoPos.Longitude = update.Message.Location.Longitude
-				weatherData.GeoPos.Latitude = update.Message.Location.Latitude
-				weatherData.GeoPos.Location = ""
+				app.WeatherData.GeoPos.Longitude = update.Message.Location.Longitude
+				app.WeatherData.GeoPos.Latitude = update.Message.Location.Latitude
+				app.WeatherData.GeoPos.Location = ""
 			} else {
-				weatherData.GeoPos.Location = update.Message.Text
-				weatherData.GeoPos.Longitude = 0
-				weatherData.GeoPos.Latitude = 0
+				app.WeatherData.GeoPos.Location = update.Message.Text
+				app.WeatherData.GeoPos.Longitude = 0
+				app.WeatherData.GeoPos.Latitude = 0
 			}
 		}
 		b.ID = update.Message.Chat.ID
 		b.MessageID = update.Message.MessageID
 	}
 
-	return weatherData
+	return app.WeatherData
 }
 
 func (b *tgbot) sendMsg(answer string) {
@@ -60,7 +61,7 @@ func (b *tgbot) sendMsg(answer string) {
 }
 
 type TGAPI struct {
-	API
+	app.API
 }
 
 func NewTGAPI() *TGAPI {
@@ -68,13 +69,13 @@ func NewTGAPI() *TGAPI {
 	if !exists {
 		log.Panic("Can't find TG-bot key in .env", exists)
 	}
-	return &TGAPI{API{key: tgAPI}}
+	return &TGAPI{app.API{Key: tgAPI}}
 }
 
-func createTGBot(bot tgbot) *CurrentWeatherData {
+func CreateTGBot(bot tgbot) *app.CurrentWeatherData {
 	return bot.getUpdates()
 }
 
-func createTGSender(bot tgbot) {
-	bot.sendMsg(answer)
+func CreateTGSender(bot tgbot) {
+	bot.sendMsg(app.Answer)
 }

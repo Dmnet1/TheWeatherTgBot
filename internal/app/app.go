@@ -1,6 +1,8 @@
-package internal
+package app
 
 import (
+	"The-weather-TGbot/internal/owm"
+	"The-weather-TGbot/internal/tgbot"
 	"fmt"
 	"strconv"
 )
@@ -11,14 +13,14 @@ const (
 )
 
 var (
-	weatherData *CurrentWeatherData
+	WeatherData *CurrentWeatherData
 	APIKey      KeyAPIGetter
-	key, answer string
+	Key, Answer string
 )
 
 type (
 	API struct {
-		key string
+		Key string
 	}
 	KeyAPIGetter interface {
 		getKey() string
@@ -26,17 +28,17 @@ type (
 )
 
 func (a *API) getKey() string {
-	return a.key
+	return a.Key
 }
 
 func createAPIKey(resourseName string) KeyAPIGetter {
 	var key KeyAPIGetter
 	switch resourseName {
 	case "tg":
-		key = NewTGAPI()
+		key = tgbot.NewTGAPI()
 		return key
 	case "openWeatherMap":
-		key = NewOWMAPI()
+		key = owm.NewOWMAPI()
 		return key
 	}
 	return key
@@ -73,24 +75,24 @@ func (c *CurrentWeatherData) getWeatherParam() (Longitude, Latitude, Temp, TempM
 func createDataWeather(apiName string) *CurrentWeatherData {
 	switch apiName {
 	case "openWeatherMap":
-		weatherData = NewOWMData(key)
-		return weatherData
+		WeatherData = owm.NewOWMData(Key)
+		return WeatherData
 	}
-	return weatherData
+	return WeatherData
 }
 
 func createBot(apiName string) *CurrentWeatherData {
 	switch apiName {
 	case "tg":
-		weatherData = createTGBot(tgBot)
+		WeatherData = tgbot.CreateTGBot(tgbot.TgBot)
 	}
-	return weatherData
+	return WeatherData
 }
 
 func createSender(apiName string) {
 	switch apiName {
 	case "tg":
-		createTGSender(tgBot)
+		tgbot.CreateTGSender(tgbot.TgBot)
 	}
 }
 
@@ -104,13 +106,13 @@ func makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLi
 
 func Run() {
 	APIKey = createAPIKey(tg)
-	key = getAPIKey(APIKey)
-	weatherData = createBot(tg)
+	Key = getAPIKey(APIKey)
+	WeatherData = createBot(tg)
 	APIKey = createAPIKey(openWeatherMap)
-	key = getAPIKey(APIKey)
-	weatherData = createDataWeather(openWeatherMap)
-	Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure, Humidity := weatherData.getWeatherParam()
-	answer = makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure, Humidity)
+	Key = getAPIKey(APIKey)
+	WeatherData = createDataWeather(openWeatherMap)
+	Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure, Humidity := WeatherData.getWeatherParam()
+	Answer = makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure, Humidity)
 	createSender(tg)
 
 }

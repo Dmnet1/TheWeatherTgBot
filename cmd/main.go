@@ -1,7 +1,7 @@
 package main
 
 import (
-	"The-weather-TGbot/internal"
+	"The-weather-TGbot/internal/app"
 	"github.com/joho/godotenv"
 	"log"
 )
@@ -13,5 +13,5 @@ func init() {
 }
 
 func main() {
-	internal.Run()
+	app.Run()
 }
