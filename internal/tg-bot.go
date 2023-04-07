@@ -6,37 +6,13 @@ import (
 	"os"
 )
 
-/*type (
-	BotAPI struct {
-		Token           string     `json:"token"`
-		Debug           bool       `json:"debug"`
-		Buffer          int        `json:"buffer"`
-		Self            User       `json:"-"`
-		Client          HTTPClient `json:"-"`
-		shutdownChannel chan interface{}
-		apiEndpoint     string
-	}
-	User struct {
-		ID                      int64  `json:"id"`
-		IsBot                   bool   `json:"is_bot,omitempty"`
-		FirstName               string `json:"first_name"`
-		LastName                string `json:"last_name,omitempty"`
-		UserName                string `json:"username,omitempty"`
-		LanguageCode            string `json:"language_code,omitempty"`
-		CanJoinGroups           bool   `json:"can_join_groups,omitempty"`
-		CanReadAllGroupMessages bool   `json:"can_read_all_group_messages,omitempty"`
-		SupportsInlineQueries   bool   `json:"supports_inline_queries,omitempty"`
-	}
-	HTTPClient interface {
-		Do(req *http.Request) (*http.Response, error)
-	}
-)*/
-
 type tgbot struct {
 	bot       *tgbotapi.BotAPI
 	ID        int64
 	MessageID int
 }
+
+var tgBot tgbot
 
 func (b *tgbot) getUpdates() *CurrentWeatherData {
 	var err error
@@ -97,4 +73,8 @@ func NewTGAPI() *TGAPI {
 
 func createTGBot(bot tgbot) *CurrentWeatherData {
 	return bot.getUpdates()
+}
+
+func createTGSender(bot tgbot) {
+	bot.sendMsg(answer)
 }

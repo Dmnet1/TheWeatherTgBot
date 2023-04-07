@@ -5,28 +5,25 @@ import (
 	"strconv"
 )
 
-const openWeatherMap string = "openWeatherMap"
-const tg string = "tg"
+const (
+	openWeatherMap string = "openWeatherMap"
+	tg             string = "tg"
+)
 
-var weather Weather
+var (
+	weatherData *CurrentWeatherData
+	APIKey      KeyAPIGetter
+	key, answer string
+)
 
-var tgBot tgbot
-
-var bot Tranporter
-
-var weatherData *CurrentWeatherData
-
-var APIKey KeyAPIGetter
-
-var key string
-
-type API struct {
-	key string
-}
-
-type KeyAPIGetter interface {
-	getKey() string
-}
+type (
+	API struct {
+		key string
+	}
+	KeyAPIGetter interface {
+		getKey() string
+	}
+)
 
 func (a *API) getKey() string {
 	return a.key
@@ -49,69 +46,52 @@ func getAPIKey(key KeyAPIGetter) string {
 	return key.getKey()
 }
 
-type CurrentWeatherData struct {
-	GeoPos Coordinates
-	Main   Main
-}
+type (
+	CurrentWeatherData struct {
+		GeoPos Coordinates
+		Main   Main
+	}
+	Coordinates struct {
+		Longitude float64
+		Latitude  float64
+		Location  string
+	}
+	Main struct {
+		Temp      float64
+		TempMin   float64
+		TempMax   float64
+		FeelsLike float64
+		Pressure  float64
+		Humidity  int
+	}
+)
 
-type Coordinates struct {
-	Longitude float64
-	Latitude  float64
-	Location  string
-}
-
-type Main struct {
-	Temp      float64
-	TempMin   float64
-	TempMax   float64
-	FeelsLike float64
-	Pressure  float64
-	Humidity  int
-}
-
-type Tranporter interface {
-	getLocation() string
-	getGeoPos() (float64, float64)
-}
-
-func (c *CurrentWeatherData) getLocation() string {
-	return c.GeoPos.Location
-}
-
-func (c *CurrentWeatherData) getGeoPos() (float64, float64) {
-	return c.GeoPos.Longitude, c.GeoPos.Latitude
-}
-
-type Weather interface {
-	getAllOfWeather() (Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int)
-}
-
-func (c *CurrentWeatherData) getAllOfWeather() (Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int) {
+func (c *CurrentWeatherData) getWeatherParam() (Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int) {
 	return c.GeoPos.Longitude, c.GeoPos.Latitude, c.Main.Temp, c.Main.TempMin, c.Main.TempMax, c.Main.FeelsLike, c.Main.Pressure, c.Main.Humidity
 }
 
-func getWeatherParam(w Weather) (Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int) {
-	return w.getAllOfWeather()
-}
-
-func createDataWeather(resourseName string) Weather {
-	var data Weather
-	switch resourseName {
+func createDataWeather(apiName string) *CurrentWeatherData {
+	switch apiName {
 	case "openWeatherMap":
-		data = NewOWMData(key)
-		return data
+		weatherData = NewOWMData(key)
+		return weatherData
 	}
-	return data
+	return weatherData
 }
 
-func createBot(resourseName string) *CurrentWeatherData {
-	var bot *CurrentWeatherData
-	switch resourseName {
+func createBot(apiName string) *CurrentWeatherData {
+	switch apiName {
 	case "tg":
-		bot = createTGBot(tgBot)
+		weatherData = createTGBot(tgBot)
 	}
+	return weatherData
+}
 
-	return bot
+func createSender(apiName string) {
+	switch apiName {
+	case "tg":
+		createTGSender(tgBot)
+	}
 }
 
 func makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int) string {
@@ -125,15 +105,12 @@ func makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLi
 func Run() {
 	APIKey = createAPIKey(tg)
 	key = getAPIKey(APIKey)
-	bot = createBot(tg)
-
+	weatherData = createBot(tg)
 	APIKey = createAPIKey(openWeatherMap)
 	key = getAPIKey(APIKey)
-	weather = createDataWeather(openWeatherMap)
+	weatherData = createDataWeather(openWeatherMap)
+	Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure, Humidity := weatherData.getWeatherParam()
+	answer = makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure, Humidity)
+	createSender(tg)
 
-	Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure, Humidity := getWeatherParam(weather)
-	answer := makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure, Humidity)
-	tgBot.sendMsg(answer)
-
-	//тут должна быть код, где используется key для tg
 }

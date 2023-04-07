@@ -19,11 +19,7 @@ func NewOWMAPI() *OWMAPI {
 	return &OWMAPI{API{key: owmAPI}}
 }
 
-type OWMData struct {
-	CurrentWeatherData
-}
-
-func NewOWMData(key string) *OWMData {
+func NewOWMData(key string) *CurrentWeatherData {
 	w, err := owm.NewCurrent("C", "ru", key)
 	if err != nil {
 		log.Fatalln("OWM can't get data: ", err)
@@ -38,7 +34,7 @@ func NewOWMData(key string) *OWMData {
 		w.CurrentByName(weatherData.GeoPos.Location)
 	}
 
-	return &OWMData{CurrentWeatherData{
+	return &CurrentWeatherData{
 		GeoPos: Coordinates{
 			Longitude: w.GeoPos.Longitude,
 			Latitude:  w.GeoPos.Latitude,
@@ -51,6 +47,5 @@ func NewOWMData(key string) *OWMData {
 			Pressure:  w.Main.Pressure,
 			Humidity:  w.Main.Humidity,
 		},
-	},
 	}
 }
