@@ -1,14 +1,14 @@
 package owm
 
 import (
-	"The-weather-TGbot/internal/app"
+	"The-weather-TGbot/internal/transport"
 	owm "github.com/briandowns/openweathermap"
 	"log"
 	"os"
 )
 
 type OWMAPI struct {
-	app.API
+	transport.API
 }
 
 func NewOWMAPI() *OWMAPI {
@@ -17,30 +17,30 @@ func NewOWMAPI() *OWMAPI {
 	if !exists {
 		log.Panic("Can't find OWM key in .env", exists)
 	}
-	return &OWMAPI{app.API{Key: owmAPI}}
+	return &OWMAPI{transport.API{Key: owmAPI}}
 }
 
-func NewOWMData(key string) *app.CurrentWeatherData {
+func NewOWMData(key string) *transport.CurrentWeatherData {
 	w, err := owm.NewCurrent("C", "ru", key)
 	if err != nil {
 		log.Fatalln("OWM can't get data: ", err)
 	}
 
-	if app.WeatherData.GeoPos.Location == "" {
+	if transport.WeatherData.GeoPos.Location == "" {
 		w.CurrentByCoordinates(&owm.Coordinates{
-			Longitude: app.WeatherData.GeoPos.Longitude,
-			Latitude:  app.WeatherData.GeoPos.Latitude,
+			Longitude: transport.WeatherData.GeoPos.Longitude,
+			Latitude:  transport.WeatherData.GeoPos.Latitude,
 		})
 	} else {
-		w.CurrentByName(app.WeatherData.GeoPos.Location)
+		w.CurrentByName(transport.WeatherData.GeoPos.Location)
 	}
 
-	return &app.CurrentWeatherData{
-		GeoPos: app.Coordinates{
+	return &transport.CurrentWeatherData{
+		GeoPos: transport.Coordinates{
 			Longitude: w.GeoPos.Longitude,
 			Latitude:  w.GeoPos.Latitude,
 		},
-		Main: app.Main{
+		Main: transport.Main{
 			Temp:      w.Main.Temp,
 			TempMin:   w.Main.TempMin,
 			TempMax:   w.Main.TempMax,
