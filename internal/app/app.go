@@ -13,38 +13,6 @@ const (
 	tg             string = "tg"
 )
 
-func makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int) string {
-	dataForMessanger := "Temp: " + fmt.Sprintf("%.2f\n", Temp) + "Temp max: " + fmt.Sprintf("%.2f\n", TempMax) +
-		"Temp min: " + fmt.Sprintf("%.2f\n", TempMin) + "Feels like: " + fmt.Sprintf("%.2f\n", FeelsLike) +
-		"Pressure: " + fmt.Sprintf("%.2f\n", Pressure) + "Humidity: " + strconv.Itoa(Humidity) +
-		"Geo location: " + fmt.Sprintf("%.2f, %.2f\n", Latitude, Longitude)
-	return dataForMessanger
-}
-
-func CreateDataWeather(apiName string) *transport.CurrentWeatherData {
-	switch apiName {
-	case "openWeatherMap":
-		transport.WeatherData = owm.NewOWMData(transport.Key)
-		return transport.WeatherData
-	}
-	return transport.WeatherData
-}
-
-func CreateBot(apiName string) *transport.CurrentWeatherData {
-	switch apiName {
-	case "tg":
-		transport.WeatherData = tgbot.CreateTGBot(tgbot.TgBot)
-	}
-	return transport.WeatherData
-}
-
-func CreateSender(apiName string) {
-	switch apiName {
-	case "tg":
-		tgbot.CreateTGSender(tgbot.TgBot)
-	}
-}
-
 func CreateAPIKey(resourseName string) transport.KeyAPIGetter {
 	var key transport.KeyAPIGetter
 	switch resourseName {
@@ -58,15 +26,44 @@ func CreateAPIKey(resourseName string) transport.KeyAPIGetter {
 	return key
 }
 
+type app struct {
+	w   *owm.Owm
+	bot *tgbot.TgBot
+}
+
+func getWeatherData(lon, lat float64, text string, weather *app) {
+	if text == "" {
+		weather.w.WeatherByCoord(lon, lat)
+	} else {
+		weather.w.WeatherByName(text)
+	}
+}
+
+func makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int) string {
+	dataForMessanger := "Temp: " + fmt.Sprintf("%.2f\n", Temp) + "Temp max: " + fmt.Sprintf("%.2f\n", TempMax) +
+		"Temp min: " + fmt.Sprintf("%.2f\n", TempMin) + "Feels like: " + fmt.Sprintf("%.2f\n", FeelsLike) +
+		"Pressure: " + fmt.Sprintf("%.2f\n", Pressure) + "Humidity: " + strconv.Itoa(Humidity) +
+		"Geo location: " + fmt.Sprintf("%.2f, %.2f\n", Latitude, Longitude)
+	return dataForMessanger
+}
+
 func Run() {
 	transport.APIKey = CreateAPIKey(tg)
 	transport.Key = transport.GetAPIKey(transport.APIKey)
-	transport.WeatherData = CreateBot(tg)
+	bot := tgbot.StartTgBot()
+
 	transport.APIKey = CreateAPIKey(openWeatherMap)
 	transport.Key = transport.GetAPIKey(transport.APIKey)
-	transport.WeatherData = CreateDataWeather(openWeatherMap)
-	Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure, Humidity := transport.WeatherData.GetWeatherParam()
-	transport.Answer = makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure, Humidity)
-	CreateSender(tg)
+	w := owm.StartOwm()
 
+	application := app{bot: tgbot.NewTgBot(bot), w: owm.NewOwmApi(w)}
+
+	lon, lat, text, messageID, ID := application.bot.ReadUpdates(application.bot.GetUpdates())
+
+	getWeatherData(lon, lat, text, &application)
+
+	answer := makeAnswerForMessanger(w.GeoPos.Longitude, w.GeoPos.Latitude, w.Main.Temp, w.Main.TempMin, w.Main.TempMax,
+		w.Main.FeelsLike, w.Main.Pressure, w.Main.Humidity)
+
+	application.bot.SendMessage(ID, answer, messageID)
 }

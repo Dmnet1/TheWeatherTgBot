@@ -7,59 +7,6 @@ import (
 	"os"
 )
 
-type tgbot struct {
-	bot       *tgbotapi.BotAPI
-	ID        int64
-	MessageID int
-}
-
-var TgBot tgbot
-
-func (b *tgbot) getUpdates() *transport.CurrentWeatherData {
-	var err error
-	b.bot, err = tgbotapi.NewBotAPI(transport.Key)
-	if err != nil {
-		log.Panic("couldn't create a new BotAPI instance: ", err)
-	}
-
-	b.bot.Debug = true
-
-	log.Printf("Authorized on account %s", b.bot.Self.UserName)
-
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
-
-	updates := b.bot.GetUpdatesChan(u)
-
-	transport.WeatherData = &transport.CurrentWeatherData{GeoPos: transport.Coordinates{Longitude: 0, Latitude: 0, Location: ""}}
-
-	for update := range updates {
-		if update.Message != nil { // If we got a weather
-			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-			if update.Message.Text == "" {
-				transport.WeatherData.GeoPos.Longitude = update.Message.Location.Longitude
-				transport.WeatherData.GeoPos.Latitude = update.Message.Location.Latitude
-				transport.WeatherData.GeoPos.Location = ""
-			} else {
-				transport.WeatherData.GeoPos.Location = update.Message.Text
-				transport.WeatherData.GeoPos.Longitude = 0
-				transport.WeatherData.GeoPos.Latitude = 0
-			}
-		}
-		b.ID = update.Message.Chat.ID
-		b.MessageID = update.Message.MessageID
-	}
-
-	return transport.WeatherData
-}
-
-func (b *tgbot) sendMsg(answer string) {
-	msg := tgbotapi.NewMessage(b.ID, answer)
-	msg.ReplyToMessageID = b.MessageID
-	b.bot.Send(msg)
-}
-
 type TGAPI struct {
 	transport.API
 }
@@ -72,10 +19,49 @@ func NewTGAPI() *TGAPI {
 	return &TGAPI{transport.API{Key: tgAPI}}
 }
 
-func CreateTGBot(bot tgbot) *transport.CurrentWeatherData {
-	return bot.getUpdates()
+type TgBot struct {
+	Bot *tgbotapi.BotAPI
 }
 
-func CreateTGSender(bot tgbot) {
-	bot.sendMsg(transport.Answer)
+func NewTgBot(bot *tgbotapi.BotAPI) *TgBot {
+	return &TgBot{Bot: bot}
+}
+
+func StartTgBot() *tgbotapi.BotAPI {
+	bot, err := tgbotapi.NewBotAPI(transport.Key)
+	if err != nil {
+		log.Panic("couldn't create a new BotAPI instance: ", err)
+	}
+
+	bot.Debug = true
+
+	log.Printf("Authorized on account %s", bot.Self.UserName)
+	return bot
+}
+
+func (t *TgBot) GetUpdates() tgbotapi.UpdatesChannel {
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+	updates := t.Bot.GetUpdatesChan(u)
+
+	return updates
+}
+
+func (t *TgBot) ReadUpdates(updates tgbotapi.UpdatesChannel) (lon float64, lat float64, text string, messageID int, ID int64) {
+	for update := range updates {
+		lon = update.Message.Location.Longitude
+		lat = update.Message.Location.Latitude
+		text = update.Message.Text
+		messageID = update.Message.MessageID
+		ID = update.Message.Chat.ID
+
+		return lon, lat, text, messageID, ID
+	}
+	return lon, lat, text, messageID, ID
+}
+
+func (t *TgBot) SendMessage(ID int64, answer string, messageID int) {
+	msg := tgbotapi.NewMessage(ID, answer)
+	msg.ReplyToMessageID = messageID
+	t.Bot.Send(msg)
 }

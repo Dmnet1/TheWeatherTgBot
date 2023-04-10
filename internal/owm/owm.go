@@ -20,33 +20,30 @@ func NewOWMAPI() *OWMAPI {
 	return &OWMAPI{transport.API{Key: owmAPI}}
 }
 
-func NewOWMData(key string) *transport.CurrentWeatherData {
-	w, err := owm.NewCurrent("C", "ru", key)
+type Owm struct {
+	W *owm.CurrentWeatherData
+}
+
+func NewOwmApi(w *owm.CurrentWeatherData) *Owm {
+	return &Owm{W: w}
+}
+
+func StartOwm() *owm.CurrentWeatherData {
+	w, err := owm.NewCurrent("C", "ru", transport.Key)
 	if err != nil {
 		log.Fatalln("OWM can't get data: ", err)
 	}
 
-	if transport.WeatherData.GeoPos.Location == "" {
-		w.CurrentByCoordinates(&owm.Coordinates{
-			Longitude: transport.WeatherData.GeoPos.Longitude,
-			Latitude:  transport.WeatherData.GeoPos.Latitude,
-		})
-	} else {
-		w.CurrentByName(transport.WeatherData.GeoPos.Location)
-	}
+	return w
+}
 
-	return &transport.CurrentWeatherData{
-		GeoPos: transport.Coordinates{
-			Longitude: w.GeoPos.Longitude,
-			Latitude:  w.GeoPos.Latitude,
-		},
-		Main: transport.Main{
-			Temp:      w.Main.Temp,
-			TempMin:   w.Main.TempMin,
-			TempMax:   w.Main.TempMax,
-			FeelsLike: w.Main.FeelsLike,
-			Pressure:  w.Main.Pressure,
-			Humidity:  w.Main.Humidity,
-		},
-	}
+func (o *Owm) WeatherByCoord(longitude, latitude float64) {
+	o.W.CurrentByCoordinates(&owm.Coordinates{
+		Longitude: longitude,
+		Latitude:  latitude,
+	})
+}
+
+func (o *Owm) WeatherByName(locationName string) {
+	o.W.CurrentByName(locationName)
 }
