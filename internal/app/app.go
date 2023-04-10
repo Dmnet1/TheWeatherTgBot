@@ -3,8 +3,9 @@ package app
 import (
 	"The-weather-TGbot/internal/owm"
 	"The-weather-TGbot/internal/tgbot"
-	"The-weather-TGbot/internal/transport"
 	"fmt"
+	"log"
+	"os"
 	"strconv"
 )
 
@@ -13,57 +14,90 @@ const (
 	tg             string = "tg"
 )
 
-func CreateAPIKey(resourseName string) transport.KeyAPIGetter {
-	var key transport.KeyAPIGetter
-	switch resourseName {
-	case "tg":
-		key = tgbot.NewTGAPI()
-		return key
-	case "openWeatherMap":
-		key = owm.NewOWMAPI()
-		return key
-	}
-	return key
+type geoDataGetter interface {
+	GetGeoData() (float64, float64, string)
 }
 
-type app struct {
+type weatherParamGetter interface {
+	GetWeatherParam() (Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int)
+}
+
+type botCreator interface {
+	HandleUpdates()
+	SendMsg(text string)
+}
+
+type weatherCreator interface {
+	WeatherByCoord(longitude, latitude float64)
+	WeatherByName(locationName string)
+}
+
+/*type app struct {
 	w   *owm.Owm
 	bot *tgbot.TgBot
 }
 
-func getWeatherData(lon, lat float64, text string, weather *app) {
+func getWeatherData(lon, lat float64, text string, weather weatherCreator) {
 	if text == "" {
-		weather.w.WeatherByCoord(lon, lat)
+		weather.WeatherByCoord(lon, lat)
 	} else {
-		weather.w.WeatherByName(text)
+		weather.WeatherByName(text)
 	}
+}*/
+
+func makeApi(name string) string {
+	var key string
+	var exists bool
+	switch name {
+	case "tg":
+		key, exists = os.LookupEnv("tg_API_KEY")
+		if !exists {
+			log.Panic("Can't find TG-bot key in .env", exists)
+		}
+	case "openWeatherMap":
+		key, exists = os.LookupEnv("owm_API_KEY")
+		if !exists {
+			log.Panic("Can't find OWM key in .env", exists)
+		}
+	}
+	return key
 }
 
 func makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int) string {
-	dataForMessanger := "Temp: " + fmt.Sprintf("%.2f\n", Temp) + "Temp max: " + fmt.Sprintf("%.2f\n", TempMax) +
-		"Temp min: " + fmt.Sprintf("%.2f\n", TempMin) + "Feels like: " + fmt.Sprintf("%.2f\n", FeelsLike) +
-		"Pressure: " + fmt.Sprintf("%.2f\n", Pressure) + "Humidity: " + strconv.Itoa(Humidity) +
+	dataForMessanger := "temp: " + fmt.Sprintf("%.2f\n", Temp) + "temp max: " + fmt.Sprintf("%.2f\n", TempMax) +
+		"temp min: " + fmt.Sprintf("%.2f\n", TempMin) + "Feels like: " + fmt.Sprintf("%.2f\n", FeelsLike) +
+		"pressure: " + fmt.Sprintf("%.2f\n", Pressure) + "humidity: " + strconv.Itoa(Humidity) +
 		"Geo location: " + fmt.Sprintf("%.2f, %.2f\n", Latitude, Longitude)
 	return dataForMessanger
 }
 
+func getWeatherInfo(b botCreator, w weatherCreator, d geoDataGetter, weather weatherParamGetter) {
+	b.HandleUpdates()
+	lon, lat, text := d.GetGeoData()
+	if text == "" {
+		w.WeatherByCoord(lon, lat)
+	} else {
+		w.WeatherByName(text)
+	}
+	longitude, latitude, temp, tempMin, tempMax, feelsLike, pressure, humidity := weather.GetWeatherParam()
+	answer := makeAnswerForMessanger(longitude, latitude, temp, tempMin, tempMax, feelsLike, pressure, humidity)
+
+	b.SendMsg(answer)
+}
+
 func Run() {
-	transport.APIKey = CreateAPIKey(tg)
-	transport.Key = transport.GetAPIKey(transport.APIKey)
-	bot := tgbot.StartTgBot()
+	bot := tgbot.StartTgBot(makeApi(tg))
+	w := owm.StartOwm(makeApi(openWeatherMap))
 
-	transport.APIKey = CreateAPIKey(openWeatherMap)
-	transport.Key = transport.GetAPIKey(transport.APIKey)
-	w := owm.StartOwm()
+	//this is realization without interface
+	/*application := app{bot: tgbot.NewTgBot(bot), w: owm.NewOwmApi(w)}
+	/*lon, lat, text, messageID, ID := application.bot.ReadUpdates(application.bot.GetUpdates())
+	getWeatherData(lon, lat, text, owm.NewOwmApi(w))
+	answer := makeAnswerForMessanger(w.GeoPos.longitude, w.GeoPos.latitude, w.Main.temp, w.Main.tempMin, w.Main.tempMax,
+		w.Main.feelsLike, w.Main.pressure, w.Main.humidity)
+	application.bot.SendMessage(ID, answer, messageID)*/
 
-	application := app{bot: tgbot.NewTgBot(bot), w: owm.NewOwmApi(w)}
+	//it's realization with interface
+	getWeatherInfo(tgbot.NewTgBot(bot), owm.NewOwmApi(w), tgbot.NewTgBot(bot), owm.NewOwmApi(w))
 
-	lon, lat, text, messageID, ID := application.bot.ReadUpdates(application.bot.GetUpdates())
-
-	getWeatherData(lon, lat, text, &application)
-
-	answer := makeAnswerForMessanger(w.GeoPos.Longitude, w.GeoPos.Latitude, w.Main.Temp, w.Main.TempMin, w.Main.TempMax,
-		w.Main.FeelsLike, w.Main.Pressure, w.Main.Humidity)
-
-	application.bot.SendMessage(ID, answer, messageID)
 }
