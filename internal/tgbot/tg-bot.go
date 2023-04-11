@@ -5,53 +5,53 @@ import (
 	"log"
 )
 
-type TgBot struct {
-	Bot       *tgbotapi.BotAPI
-	Lon, Lat  float64
-	Text      string
-	MessageID int
-	ChatID    int64
+type tgBot struct {
+	bot       *tgbotapi.BotAPI
+	lon, Lat  float64
+	text      string
+	messageID int
+	chatID    int64
 }
 
-func (t *TgBot) GetLoc() (float64, float64, string) {
-	return t.Lon, t.Lat, t.Text
+func (t *tgBot) GetLoc() (float64, float64, string) {
+	return t.lon, t.Lat, t.text
 }
 
-func (t *TgBot) HandleUpdates() {
+func (t *tgBot) HandleUpdates() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
-	updates := t.Bot.GetUpdatesChan(u)
+	updates := t.bot.GetUpdatesChan(u)
 	for update := range updates {
-		t.Lon = update.Message.Location.Longitude
+		t.lon = update.Message.Location.Longitude
 		t.Lat = update.Message.Location.Latitude
-		t.Text = update.Message.Text
-		t.MessageID = update.Message.MessageID
-		t.ChatID = update.Message.Chat.ID
+		t.text = update.Message.Text
+		t.messageID = update.Message.MessageID
+		t.chatID = update.Message.Chat.ID
 	}
 }
 
-func (t *TgBot) SendMsg(answer string) {
-	msg := tgbotapi.NewMessage(t.ChatID, answer)
-	msg.ReplyToMessageID = t.MessageID
-	t.Bot.Send(msg)
+func (t *tgBot) SendMsg(answer string) {
+	msg := tgbotapi.NewMessage(t.chatID, answer)
+	msg.ReplyToMessageID = t.messageID
+	t.bot.Send(msg)
 }
 
-func (t *TgBot) GetUpdates() tgbotapi.UpdatesChannel {
+func (t *tgBot) GetUpdates() tgbotapi.UpdatesChannel {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
-	updates := t.Bot.GetUpdatesChan(u)
+	updates := t.bot.GetUpdatesChan(u)
 
 	return updates
 }
 
-func NewTgBot(bot *tgbotapi.BotAPI) *TgBot {
-	return &TgBot{
-		Bot:       bot,
-		Lon:       0,
+func NewTgBot(bot *tgbotapi.BotAPI) *tgBot {
+	return &tgBot{
+		bot:       bot,
+		lon:       0,
 		Lat:       0,
-		Text:      "",
-		MessageID: 0,
-		ChatID:    0,
+		text:      "",
+		messageID: 0,
+		chatID:    0,
 	}
 }
 
@@ -67,12 +67,12 @@ func StartTgBot(key string) *tgbotapi.BotAPI {
 	return bot
 }
 
-/*func (t *TgBot) ReadUpdates(updates tgbotapi.UpdatesChannel) (lon float64, lat float64, text string, messageID int, ID int64) {
+/*func (t *tgBot) ReadUpdates(updates tgbotapi.UpdatesChannel) (lon float64, lat float64, text string, messageID int, ID int64) {
 	for update := range updates {
 		lon = update.Message.Location.Longitude
 		lat = update.Message.Location.Latitude
-		text = update.Message.Text
-		messageID = update.Message.MessageID
+		text = update.Message.text
+		messageID = update.Message.messageID
 		ID = update.Message.Chat.ID
 
 		return lon, lat, text, messageID, ID
@@ -80,8 +80,8 @@ func StartTgBot(key string) *tgbotapi.BotAPI {
 	return lon, lat, text, messageID, ID
 }*/
 
-/*func (t *TgBot) SendMessage(ID int64, answer string, messageID int) {
+/*func (t *tgBot) SendMessage(ID int64, answer string, messageID int) {
 	msg := tgbotapi.NewMessage(ID, answer)
 	msg.ReplyToMessageID = messageID
-	t.Bot.Send(msg)
+	t.bot.Send(msg)
 }*/
