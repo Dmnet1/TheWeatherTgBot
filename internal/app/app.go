@@ -14,12 +14,12 @@ const (
 	tg             string = "tg"
 )
 
-type geoDataGetter interface {
-	GetGeoData() (float64, float64, string)
+type location interface {
+	GetLoc() (float64, float64, string)
 }
 
-type weatherParamGetter interface {
-	GetWeatherParam() (Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int)
+type mainWeatherParam interface {
+	GetParam() (Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int)
 }
 
 type bot interface {
@@ -33,16 +33,10 @@ type weather interface {
 }
 
 type app struct {
-	w weather //w   *owm.Owm //тут должен быть интерфейс погоды
-	b bot     //bot *tgbot.TgBot//тут бота
-}
-
-func getWeatherData(lon, lat float64, text string, weather weather) {
-	if text == "" {
-		weather.WeatherByCoord(lon, lat)
-	} else {
-		weather.WeatherByName(text)
-	}
+	w     weather
+	b     bot
+	loc   location
+	param mainWeatherParam
 }
 
 func makeApi(name string) string {
@@ -71,26 +65,25 @@ func makeAnswerForMessanger(Longitude, Latitude, Temp, TempMin, TempMax, FeelsLi
 	return dataForMessanger
 }
 
-func getWeatherInfo(b bot, w weather, d geoDataGetter, weather weatherParamGetter) {
-	b.HandleUpdates()
-	lon, lat, text := d.GetGeoData()
+func getWeatherInfo(a app) {
+	a.b.HandleUpdates()
+	lon, lat, text := a.loc.GetLoc()
 	if text == "" {
-		w.WeatherByCoord(lon, lat)
+		a.w.WeatherByCoord(lon, lat)
 	} else {
-		w.WeatherByName(text)
+		a.w.WeatherByName(text)
 	}
-	longitude, latitude, temp, tempMin, tempMax, feelsLike, pressure, humidity := weather.GetWeatherParam()
+	longitude, latitude, temp, tempMin, tempMax, feelsLike, pressure, humidity := a.param.GetParam()
 	answer := makeAnswerForMessanger(longitude, latitude, temp, tempMin, tempMax, feelsLike, pressure, humidity)
 
-	b.SendMsg(answer)
+	a.b.SendMsg(answer)
 }
 
 func Run() {
 	b := tgbot.StartTgBot(makeApi(tg))
 	w := owm.StartOwm(makeApi(openWeatherMap))
-
-	//this is realization without interface
 	application := app{b: tgbot.NewTgBot(b), w: owm.NewOwmApi(w)}
+
 	/*lon, lat, text, messageID, ID := application.bot.ReadUpdates(application.bot.GetUpdates())
 	getWeatherData(lon, lat, text, owm.NewOwmApi(w))
 	answer := makeAnswerForMessanger(w.GeoPos.longitude, w.GeoPos.latitude, w.Main.temp, w.Main.tempMin, w.Main.tempMax,
@@ -98,6 +91,13 @@ func Run() {
 	application.bot.SendMessage(ID, answer, messageID)*/
 
 	//it's realization with interface
-	getWeatherInfo(tgbot.NewTgBot(bot), owm.NewOwmApi(w), tgbot.NewTgBot(bot), owm.NewOwmApi(w))
-
+	getWeatherInfo(application)
 }
+
+/*func getWeatherData(lon, lat float64, text string, weather weather) {
+	if text == "" {
+		weather.WeatherByCoord(lon, lat)
+	} else {
+		weather.WeatherByName(text)
+	}
+}*/

@@ -13,7 +13,7 @@ type TgBot struct {
 	ChatID    int64
 }
 
-func (t *TgBot) GetGeoData() (float64, float64, string) {
+func (t *TgBot) GetLoc() (float64, float64, string) {
 	return t.Lon, t.Lat, t.Text
 }
 
@@ -44,25 +44,6 @@ func (t *TgBot) GetUpdates() tgbotapi.UpdatesChannel {
 	return updates
 }
 
-/*func (t *TgBot) ReadUpdates(updates tgbotapi.UpdatesChannel) (lon float64, lat float64, text string, messageID int, ID int64) {
-	for update := range updates {
-		lon = update.Message.Location.Longitude
-		lat = update.Message.Location.Latitude
-		text = update.Message.Text
-		messageID = update.Message.MessageID
-		ID = update.Message.Chat.ID
-
-		return lon, lat, text, messageID, ID
-	}
-	return lon, lat, text, messageID, ID
-}*/
-
-/*func (t *TgBot) SendMessage(ID int64, answer string, messageID int) {
-	msg := tgbotapi.NewMessage(ID, answer)
-	msg.ReplyToMessageID = messageID
-	t.Bot.Send(msg)
-}*/
-
 func NewTgBot(bot *tgbotapi.BotAPI) *TgBot {
 	return &TgBot{
 		Bot:       bot,
@@ -85,3 +66,22 @@ func StartTgBot(key string) *tgbotapi.BotAPI {
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 	return bot
 }
+
+/*func (t *TgBot) ReadUpdates(updates tgbotapi.UpdatesChannel) (lon float64, lat float64, text string, messageID int, ID int64) {
+	for update := range updates {
+		lon = update.Message.Location.Longitude
+		lat = update.Message.Location.Latitude
+		text = update.Message.Text
+		messageID = update.Message.MessageID
+		ID = update.Message.Chat.ID
+
+		return lon, lat, text, messageID, ID
+	}
+	return lon, lat, text, messageID, ID
+}*/
+
+/*func (t *TgBot) SendMessage(ID int64, answer string, messageID int) {
+	msg := tgbotapi.NewMessage(ID, answer)
+	msg.ReplyToMessageID = messageID
+	t.Bot.Send(msg)
+}*/

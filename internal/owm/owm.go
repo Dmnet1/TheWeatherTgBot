@@ -6,12 +6,13 @@ import (
 )
 
 type Owm struct {
-	W                                                                *owm.CurrentWeatherData
-	longitude, latitude, temp, tempMin, tempMax, feelsLike, pressure float64
-	humidity                                                         int
+	W *owm.CurrentWeatherData
+	longitude, latitude, temp, tempMin,
+	tempMax, feelsLike, pressure float64
+	humidity int
 }
 
-func (o *Owm) GetWeatherParam() (Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int) {
+func (o *Owm) GetParam() (Longitude, Latitude, Temp, TempMin, TempMax, FeelsLike, Pressure float64, Humidity int) {
 	return o.longitude, o.latitude, o.temp, o.tempMin, o.tempMax, o.feelsLike, o.pressure, o.humidity
 }
 
