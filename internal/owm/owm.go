@@ -3,7 +3,25 @@ package owm
 import (
 	owm "github.com/briandowns/openweathermap"
 	"log"
+	"os"
 )
+
+type key struct {
+	key string
+}
+
+func (k *key) GetKey() string {
+	var exists bool
+	k.key, exists = os.LookupEnv("owm_API_KEY")
+	if !exists {
+		log.Panic("Can'k find TG-bot key in .env", exists)
+	}
+	return k.key
+}
+
+func NewKey() *key {
+	return &key{key: ""}
+}
 
 type openWeatherMap struct {
 	w *owm.CurrentWeatherData

@@ -3,7 +3,25 @@ package tgbot
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
+	"os"
 )
+
+type key struct {
+	key string
+}
+
+func (k *key) GetKey() string {
+	var exists bool
+	k.key, exists = os.LookupEnv("tg_API_KEY")
+	if !exists {
+		log.Panic("Can'k find TG-bot key in .env", exists)
+	}
+	return k.key
+}
+
+func NewKey() *key {
+	return &key{key: ""}
+}
 
 type tgBot struct {
 	bot       *tgbotapi.BotAPI
@@ -66,22 +84,3 @@ func StartTgBot(key string) *tgbotapi.BotAPI {
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 	return bot
 }
-
-/*func (t *tgBot) ReadUpdates(updates tgbotapi.UpdatesChannel) (lon float64, lat float64, text string, messageID int, ID int64) {
-	for update := range updates {
-		lon = update.Message.Location.Longitude
-		lat = update.Message.Location.Latitude
-		text = update.Message.text
-		messageID = update.Message.messageID
-		ID = update.Message.Chat.ID
-
-		return lon, lat, text, messageID, ID
-	}
-	return lon, lat, text, messageID, ID
-}*/
-
-/*func (t *tgBot) SendMessage(ID int64, answer string, messageID int) {
-	msg := tgbotapi.NewMessage(ID, answer)
-	msg.ReplyToMessageID = messageID
-	t.bot.Send(msg)
-}*/
