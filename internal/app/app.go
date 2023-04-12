@@ -16,7 +16,7 @@ type mainWeatherParam interface {
 }
 
 type bot interface {
-	HandleUpdates() //приватный
+	HandleUpdates()
 	SendMsg(text string)
 }
 
